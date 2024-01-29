@@ -1,2 +1,2 @@
-# LFP_Ejemplos_1S2024
+# Lenguajes Formales y de Programación B-
 Repositorio para ejemplos vistos en clase del curso Lenguajes Formales y de Programación
