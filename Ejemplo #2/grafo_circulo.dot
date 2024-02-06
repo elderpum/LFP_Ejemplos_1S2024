@@ -1,0 +1,6 @@
+// Grafo del círculo
+digraph {
+	A [label="Círculo"]
+	B [label="Área"]
+	A -> B [label="r = 5.6"]
+}
