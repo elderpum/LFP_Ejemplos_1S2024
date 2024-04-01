@@ -8,18 +8,50 @@ from tkinter import ttk
 from tkinter import filedialog
 
 class Lexema:
-    def __init__(self, tipo, valor):
+    def __init__(self, tipo, valor, columna, fila):
         self.tipo = tipo
         self.valor = valor
+        self.columna = columna
+        self.fila = fila
 
 class Error:
-    def __init__(self, mensaje):
+    def __init__(self, mensaje, columna, fila):
         self.mensaje = mensaje
+        self.columna = columna
+        self.fila = fila
+
+# Función que se encarga de crear el reporte de tokens y errores en formato HTML
+def generarReporteHTML(lexemas, errores):
+    # Creamos el contenido del archivo HTML
+    contenido = "<!DOCTYPE html>\n<html>\n<head>\n<title>Reporte de Tokens y Errores</title>\n</head>\n<body>\n"
+    contenido += "<h1>Reporte de Tokens y Errores</h1>\n"
+    contenido += "<h2>Lexemas</h2>\n"
+    contenido += "<table border='1'>\n<tr><th>#</th><th>Tipo</th><th>Valor</th><th>Columna</th><th>Fila</th></tr>\n"
+    for i, lexema in enumerate(lexemas):
+        contenido += f"<tr><td>{i+1}</td><td>{lexema.tipo}</td><td>{lexema.valor}</td><td>{lexema.columna}</td><td>{lexema.fila}</td></tr>\n"
+    contenido += "</table>\n"
+
+    # Agregamos los errores
+    contenido += "<h2>Errores</h2>\n"
+    contenido += "<table border='1'>\n<tr><th>#</th><th>Mensaje</th><th>Columna</th><th>Fila</th></tr>\n"
+    for i, error in enumerate(errores):
+        contenido += f"<tr><td>{i+1}</td><td>{error.mensaje}</td><td>{error.columna}</td><td>{error.fila}</td></tr>\n"
+    contenido += "</table>\n"
+
+    contenido += "</body>\n</html>"
+
+    # Guardamos el contenido en un archivo HTML nuevo
+    with open("reporte.html", "w") as f:
+        f.write(contenido)
+        f.close()
         
 def analizadorLexico(textAreaInicial, textAreaFinal):
     lexemas = []
     errores = []
     palabra = ""
+    fila = 1
+    columna = 0
+
     # Obtenemos el texto del text area
     texto = textAreaInicial.get("1.0", "end")
     
@@ -27,6 +59,7 @@ def analizadorLexico(textAreaInicial, textAreaFinal):
     i = 0
     while i < len(texto):
         char = texto[i]
+        columna += 1
 
         # Verificamos que el caracter sea una letra o un dígito
         if char.isalnum():
@@ -37,29 +70,34 @@ def analizadorLexico(textAreaInicial, textAreaFinal):
 
             # Verificar si la palabra es una palabra reservada
             if palabra.lower() in ['doctype', 'html', 'head', 'title', 'body', 'h1', 'p', 'h2']:
-                lexemas.append(Lexema("PALABRA_RESERVADA", palabra.lower()))
+                lexemas.append(Lexema("PALABRA_RESERVADA", palabra.lower(), columna, fila))
             elif palabra.isdigit():
-                lexemas.append(Lexema("NUMERO", palabra))
+                lexemas.append(Lexema("NUMERO", palabra, columna, fila))
             else:
-                lexemas.append(Lexema("PALABRA", palabra))
+                lexemas.append(Lexema("PALABRA", palabra, columna, fila))
             palabra = ""
 
         # Verificamos otros caracteres especiales
         elif char in [',']:
-            lexemas.append(Lexema("COMA", char))
+            lexemas.append(Lexema("COMA", char, columna, fila))
         elif char in ['.']:
-            lexemas.append(Lexema("PUNTO", char))
+            lexemas.append(Lexema("PUNTO", char, columna, fila))
         elif char in ['+', '-', '*', '/', '<', '>', '!']:
-            lexemas.append(Lexema("ESPECIAL", char))
+            lexemas.append(Lexema("ESPECIAL", char, columna, fila))
         # Ignoramos estos caracteres
         elif char in [' ', '\n', '\t', '\r']:
-            pass
+            if char == '\n':
+                fila += 1
+            columna = 0
         else:
-            errores.append(Error(f"Caracter no válido: {char}"))
+            errores.append(Error(char, columna, fila))
 
         i += 1
     
     imprimirLexemasYErrores(lexemas, errores, textAreaFinal)
+
+    # Generamos el reporte en formato HTML
+    generarReporteHTML(lexemas, errores)
 
 def imprimirLexemasYErrores(lexemas, errores, textAreaFinal):
     # Imprimimos los lexemas
